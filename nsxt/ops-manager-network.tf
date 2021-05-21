@@ -28,18 +28,6 @@ resource "nsxt_logical_tier1_router" "t1_infrastructure" {
   }
 }
 
-resource "nsxt_logical_router_link_port_on_tier0" "t0_to_t1_deployment" {
-  display_name = "${var.environment_name}-T0-to-T1-Deployment"
-
-  description       = "Link Port on Logical Tier 0 Router for connecting to Tier 1 Deployment Router."
-  logical_router_id = data.nsxt_logical_tier0_router.t0_router.id
-
-  tag {
-    scope = "terraform"
-    tag   = var.environment_name
-  }
-}
-
 resource "nsxt_logical_router_link_port_on_tier1" "t1_infrastructure_to_t0" {
   display_name = "${var.environment_name}-T1-Infrastructure-to-T0"
 
@@ -88,6 +76,18 @@ resource "nsxt_logical_router_downlink_port" "infrastructure_dp" {
   logical_router_id             = nsxt_logical_tier1_router.t1_infrastructure.id
   linked_logical_switch_port_id = nsxt_logical_port.infrastructure_lp.id
   ip_address                    = "${var.subnet_prefix}.1.1/24"
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_logical_router_link_port_on_tier0" "t0_to_t1_deployment" {
+  display_name = "${var.environment_name}-T0-to-T1-Deployment"
+
+  description       = "Link Port on Logical Tier 0 Router for connecting to Tier 1 Deployment Router."
+  logical_router_id = data.nsxt_logical_tier0_router.t0_router.id
 
   tag {
     scope = "terraform"
@@ -245,4 +245,89 @@ resource "nsxt_ip_block" "container_ip_block" {
   description  = "Subnets are allocated from this pool to each newly-created Org"
   display_name = "${var.environment_name}-pas-container-ip-block"
   cidr         = "10.12.0.0/14"
+}
+
+resource "nsxt_logical_router_link_port_on_tier0" "t0_to_t1_services" {
+  display_name = "${var.environment_name}-T0-to-T1-Services"
+
+  description       = "Link Port on Logical Tier 0 Router for connecting to Tier 1 Services Router."
+  logical_router_id = data.nsxt_logical_tier0_router.t0_router.id
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_logical_tier1_router" "t1_services" {
+  display_name = "${var.environment_name}-T1-Router-PAS-Services"
+
+  description     = "Services Tier 1 Router."
+  failover_mode   = "NON_PREEMPTIVE"
+  edge_cluster_id = data.nsxt_edge_cluster.edge_cluster.id
+
+  enable_router_advertisement = true
+  advertise_connected_routes  = true
+  advertise_lb_vip_routes     = true
+  advertise_lb_snat_ip_routes = true
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_logical_router_link_port_on_tier1" "t1_services_to_t0" {
+  display_name = "${var.environment_name}-T1-Services-to-T0"
+
+  description                   = "Link Port on Services Tier 1 Router connecting to Logical Tier 0 Router. Provisioned by Terraform."
+  logical_router_id             = nsxt_logical_tier1_router.t1_services.id
+  linked_logical_router_port_id = nsxt_logical_router_link_port_on_tier0.t0_to_t1_services.id
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_logical_switch" "services_ls" {
+  display_name = "${var.environment_name}-PAS-Services"
+
+  transport_zone_id = data.nsxt_transport_zone.east-west-overlay.id
+  admin_state       = "UP"
+
+  description      = "Logical Switch for the T1 Services Router."
+  replication_mode = "MTEP"
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_logical_port" "services_lp" {
+  display_name = "${var.environment_name}-PAS-Services-lp"
+
+  admin_state       = "UP"
+  description       = "Logical Port on the Logical Switch for the T1 Services Router."
+  logical_switch_id = nsxt_logical_switch.services_ls.id
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_logical_router_downlink_port" "services_dp" {
+  display_name = "${var.environment_name}-PAS-Services-dp"
+
+  description                   = "Downlink port connecting PAS-Services router to its Logical Switch"
+  logical_router_id             = nsxt_logical_tier1_router.t1_services.id
+  linked_logical_switch_port_id = nsxt_logical_port.services_lp.id
+  ip_address                    = "${var.subnet_prefix}.3.1/24"
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
 }
