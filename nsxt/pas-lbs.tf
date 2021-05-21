@@ -1,6 +1,21 @@
 resource "nsxt_lb_http_monitor" "pas-web" {
-  description           = "The Active Health Monitor (healthcheck) for Web (HTTP(S)) traffic."
+  description           = "The Active Health Monitor (healthcheck) for Web HTTP traffic."
   display_name          = "${var.environment_name}-pas-web-monitor"
+  monitor_port          = 8080
+  request_method        = "GET"
+  request_url           = "/health"
+  request_version       = "HTTP_VERSION_1_1"
+  response_status_codes = [200]
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_lb_http_monitor" "pas-https" {
+  description           = "The Active Health Monitor (healthcheck) for Web HTTPS traffic."
+  display_name          = "${var.environment_name}-pas-https-monitor"
   monitor_port          = 8080
   request_method        = "GET"
   request_url           = "/health"
@@ -40,11 +55,28 @@ resource "nsxt_lb_tcp_monitor" "pas-ssh" {
 }
 
 resource "nsxt_lb_pool" "pas-web" {
-  description              = "The Server Pool of Web (HTTP(S)) traffic handling VMs"
+  description              = "The Server Pool of Web HTTP traffic handling VMs"
   display_name             = "${var.environment_name}-pas-web-pool"
   algorithm                = "ROUND_ROBIN"
   tcp_multiplexing_enabled = false
   active_monitor_id        = nsxt_lb_http_monitor.pas-web.id
+
+  snat_translation {
+    type = "SNAT_AUTO_MAP"
+  }
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_lb_pool" "pas-https" {
+  description              = "The Server Pool of Web HTTPS traffic handling VMs"
+  display_name             = "${var.environment_name}-pas-https-pool"
+  algorithm                = "ROUND_ROBIN"
+  tcp_multiplexing_enabled = false
+  active_monitor_id        = nsxt_lb_http_monitor.pas-https.id
 
   snat_translation {
     type = "SNAT_AUTO_MAP"
@@ -102,12 +134,26 @@ resource "nsxt_lb_fast_tcp_application_profile" "pas_lb_tcp_application_profile"
 }
 
 resource "nsxt_lb_tcp_virtual_server" "lb_web_virtual_server" {
-  description            = "The Virtual Server for Web (HTTP(S)) traffic"
+  description            = "The Virtual Server for Web (HTTP) traffic"
   display_name           = "${var.environment_name}-pas-web-vs"
   application_profile_id = nsxt_lb_fast_tcp_application_profile.pas_lb_tcp_application_profile.id
   ip_address             = var.nsxt_lb_web_virtual_server_ip_address
-  ports                  = ["80", "443"]
+  ports                  = ["80"]
   pool_id                = nsxt_lb_pool.pas-web.id
+
+  tag {
+    scope = "terraform"
+    tag   = var.environment_name
+  }
+}
+
+resource "nsxt_lb_tcp_virtual_server" "lb_https_virtual_server" {
+  description            = "The Virtual Server for Web HTTPS traffic"
+  display_name           = "${var.environment_name}-pas-https-vs"
+  application_profile_id = nsxt_lb_fast_tcp_application_profile.pas_lb_tcp_application_profile.id
+  ip_address             = var.nsxt_lb_web_virtual_server_ip_address
+  ports                  = ["443"]
+  pool_id                = nsxt_lb_pool.pas-https.id
 
   tag {
     scope = "terraform"
