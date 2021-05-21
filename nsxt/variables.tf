@@ -13,10 +13,6 @@ variable "nsxt_password" {
   type        = string
 }
 
-variable "nsxt_ca_cert" {
-  type    = string
-}
-
 variable "allow_unverified_ssl" {
   default     = false
   description = "Allow connection to NSX-T manager with self-signed certificates. Set to `true` for POC or development environments"
@@ -87,55 +83,6 @@ variable "nsxt_lb_tcp_virtual_server_ports" {
 variable "nsxt_lb_ssh_virtual_server_ip_address" {
   description = "The ip address on which the Virtual Server listens for SSH traffic, should be in the same subnet as the external IP pool, but not in the range of available IP addresses, e.g. `10.195.74.18`"
   type        = string
-}
-
-variable "vcenter_datacenter" {
-  type = string
-}
-
-variable "vcenter_datastore" {
-  type = string
-}
-
-variable "vcenter_host" {
-  type = string
-}
-
-variable "vcenter_username" {
-  type = string
-}
-
-variable "vcenter_password" {
-  type = string
-}
-
-variable "vcenter_resource_pool" {
-  type = string
-}
-
-variable "vcenter_cluster" {
-  type = string
-}
-
-variable "ops_manager_ntp" {
-  type = string
-}
-
-variable "ops_manager_netmask" {
-  type = string
-}
-
-variable "ops_manager_dns" {
-  type = string
-}
-
-variable "ops_manager_dns_servers" {
-  type = string
-}
-
-variable "ops_manager_folder" {
-  type = string
-  default = ""
 }
 
 variable "subnet_prefix" {
