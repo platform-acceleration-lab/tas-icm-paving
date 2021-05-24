@@ -198,6 +198,7 @@ resource "nsxt_lb_service" "pas_lb" {
   size              = "SMALL"
   virtual_server_ids = [
     nsxt_lb_tcp_virtual_server.lb_web_virtual_server.id,
+    nsxt_lb_tcp_virtual_server.lb_https_virtual_server.id,
     nsxt_lb_tcp_virtual_server.lb_tcp_virtual_server.id,
     nsxt_lb_tcp_virtual_server.lb_ssh_virtual_server.id
   ]
