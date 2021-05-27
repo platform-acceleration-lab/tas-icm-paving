@@ -15,6 +15,16 @@ locals {
     infrastructure_subnet_cidr               = "${var.subnet_prefix}.1.0/24"
     infrastructure_subnet_gateway            = "${var.subnet_prefix}.1.1"
     infrastructure_subnet_reserved_ip_ranges = "${var.subnet_prefix}.1.1-${var.subnet_prefix}.1.10"
+    
+    deployment_subnet_name               = nsxt_logical_switch.deployment_ls.display_name
+    deployment_subnet_cidr               = "${var.subnet_prefix}.2.0/24"
+    deployment_subnet_gateway            = "${var.subnet_prefix}.2.1"
+    deployment_subnet_reserved_ip_ranges = "${var.subnet_prefix}.2.1"
+    
+    services_subnet_name               = nsxt_logical_switch.services_ls.display_name
+    services_subnet_cidr               = "${var.subnet_prefix}.3.0/24"
+    services_subnet_gateway            = "${var.subnet_prefix}.3.1"
+    services_subnet_reserved_ip_ranges = "${var.subnet_prefix}.3.1"
 
     allow_unverified_ssl      = var.allow_unverified_ssl
     disable_ssl_verification  = !var.allow_unverified_ssl
