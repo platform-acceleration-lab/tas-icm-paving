@@ -4,6 +4,8 @@ locals {
     lb_pool_https = nsxt_lb_pool.pas-https.display_name
     lb_pool_tcp = nsxt_lb_pool.pas-tcp.display_name
     lb_pool_ssh = nsxt_lb_pool.pas-ssh.display_name
+
+    container_ip_block_name = nsxt_ip_block.container_ip_block.display_name
   }
 }
 
