@@ -28,6 +28,8 @@ locals {
 
     allow_unverified_ssl      = var.allow_unverified_ssl
     disable_ssl_verification  = !var.allow_unverified_ssl
+
+    external_ip_pool  = nsxt_ip_pool.external_ip_pool.display_name
   }
 }
 
