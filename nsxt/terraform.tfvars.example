@@ -23,6 +23,8 @@ nsxt_lb_tcp_virtual_server_ip_address = "10.195.74.19"
 nsxt_lb_ssh_virtual_server_ip_address = "10.195.74.18"
 nsxt_lb_tcp_virtual_server_ports = ["8080", "52135", "34000-35000"]
 
+# Needed for Concourse deployment (concourse.tf)
+nsxt_lb_concourse_virtual_server_ip_address = "10.195.74.20"
 
 # OPTIONAL
 # These variables have reasonable default values.
