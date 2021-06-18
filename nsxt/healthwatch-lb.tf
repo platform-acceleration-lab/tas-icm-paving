@@ -1,39 +1,11 @@
-resource "nsxt_lb_http_monitor" "healthwatch-web" {
-  description           = "The Active Health Monitor (healthcheck) for Healthwatch HTTP traffic."
-  display_name          = "${var.environment_name}-healthwatch-web-monitor"
-  monitor_port          = 8080
-  request_method        = "GET"
-  request_url           = "/health"
-  request_version       = "HTTP_VERSION_1_1"
-  response_status_codes = [200]
-
-  tag {
-    scope = "terraform"
-    tag   = var.environment_name
-  }
-}
-
-resource "nsxt_lb_http_monitor" "healthwatch-https" {
-  description           = "The Active Health Monitor (healthcheck) for Healthwatch HTTPS traffic."
-  display_name          = "${var.environment_name}-healthwatch-https-monitor"
-  monitor_port          = 8080
-  request_method        = "GET"
-  request_url           = "/health"
-  request_version       = "HTTP_VERSION_1_1"
-  response_status_codes = [200]
-
-  tag {
-    scope = "terraform"
-    tag   = var.environment_name
-  }
-}
+# This sets up a load balancer on the services network for the
+# sole purpose of allowing us to deploy Healthwatch on that network.
 
 resource "nsxt_lb_pool" "healthwatch-web" {
   description              = "The Server Pool of Healthwatch HTTP traffic handling VMs"
   display_name             = "${var.environment_name}-healthwatch-web-pool"
   algorithm                = "ROUND_ROBIN"
   tcp_multiplexing_enabled = false
-  active_monitor_id        = nsxt_lb_http_monitor.healthwatch-web.id
 
   snat_translation {
     type = "SNAT_AUTO_MAP"
@@ -50,7 +22,6 @@ resource "nsxt_lb_pool" "healthwatch-https" {
   display_name             = "${var.environment_name}-healthwatch-https-pool"
   algorithm                = "ROUND_ROBIN"
   tcp_multiplexing_enabled = false
-  active_monitor_id        = nsxt_lb_http_monitor.healthwatch-https.id
 
   snat_translation {
     type = "SNAT_AUTO_MAP"
@@ -106,7 +77,7 @@ resource "nsxt_lb_service" "healthwatch_lb" {
   display_name = "${var.environment_name}-healthwatch-lb"
 
   enabled           = true
-  logical_router_id = nsxt_logical_tier1_router.t1_deployment.id
+  logical_router_id = nsxt_logical_tier1_router.t1_services.id
   size              = "SMALL"
   virtual_server_ids = [
     nsxt_lb_tcp_virtual_server.lb_healthwatch_web_virtual_server.id,
@@ -115,7 +86,7 @@ resource "nsxt_lb_service" "healthwatch_lb" {
 
   depends_on = [
     nsxt_logical_router_link_port_on_tier1.t1_infrastructure_to_t0,
-    nsxt_logical_router_link_port_on_tier1.t1_deployment_to_t0,
+    nsxt_logical_router_link_port_on_tier1.t1_services_to_t0,
   ]
 
   tag {
@@ -123,3 +94,20 @@ resource "nsxt_lb_service" "healthwatch_lb" {
     tag   = var.environment_name
   }
 }
+
+variable "nsxt_lb_healthwatch_virtual_server_ip_address" {
+  description = "The ip address on which the Virtual Server listens for Healthwatch (Grafana dashboard) traffic, should be in the same subnet as the external IP pool, but not in the range of available IP addresses, e.g. `10.195.74.20`"
+  type        = string
+}
+
+locals {
+  healthwatch_config = {
+    lb_pool_web = nsxt_lb_pool.healthwatch-web.display_name
+    lb_pool_https = nsxt_lb_pool.healthwatch-https.display_name
+  }
+}
+
+output "healthwatch_config" {
+  value = local.healthwatch_config
+}
+
