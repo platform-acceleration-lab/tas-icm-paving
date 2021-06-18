@@ -85,6 +85,11 @@ variable "nsxt_lb_ssh_virtual_server_ip_address" {
   type        = string
 }
 
+variable "nsxt_lb_healthwatch_virtual_server_ip_address" {
+  description = "The ip address on which the Virtual Server listens for Healthwatch (Grafana dashboard) traffic, should be in the same subnet as the external IP pool, but not in the range of available IP addresses, e.g. `10.195.74.20`"
+  type        = "string"
+}
+
 variable "subnet_prefix" {
   type = string
   default = "192.168"
